@@ -1,0 +1,139 @@
+<html>
+<head>
+    <script type="text/javascript">
+        function viewJSON(what){
+            var URL = what.URL.value;
+            if(URL){
+                function loadJSON(url) {
+                    if (window.XMLHttpRequest)
+                    {// code for IE7+, Firefox, Chrome, Opera, Safari
+                        xmlhttp=new XMLHttpRequest();
+                    } 
+                    else {// code for IE6, IE5
+                        xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");  
+                    }
+                    xmlhttp.open("GET",url,false);
+                    /*xmlhttp.onerror = displayErrorAlert(xmlhttp);*/
+                    try{
+                    xmlhttp.send();
+                    }
+                    catch(exception){
+                        if(exception.name == 'NetworkError'){
+                            alert("Please enter valid file name");
+                            return;
+                        }
+                        if(xmlhttp.status=404){
+                            alert("Please enter valid file name");
+                            return;
+                        }
+                    }
+                    jsonObj= JSON.parse(xmlhttp.responseText);
+                    
+                    return jsonObj;   
+                }
+                jsonObj = loadJSON(URL);
+                if (window.ActiveXObject) //if IE, simply execute script (due to async prop).
+                {  
+                    if (jsonObj.parseError.errorCode != 0) {
+                        var myErr = jsonObj.parseError;
+                        generateError(jsonObj);
+                        hWin = window.open("", "Error", "height=300,width=340");
+                        hWin.document.write(html_text);
+                    }
+                    else {  
+                        result = generateHTML(jsonObj);
+                        if(result){
+                            hWin = window.open("", "Assignment4", "height=800,width=1200");
+                            hWin.document.write(html_text);   
+                        }
+                        else{
+                            alert("File does not contain trucking data");
+                        }
+                    } 
+                } 
+                else{ //else if FF, execute script once JSON object has loaded{  
+                    
+                    jsonObj.onload=generateHTML(jsonObj);
+                    if(error){
+                        alert("No trucking data found");
+                    }
+                    else{
+                        hWin = window.open("", "Assignment4", "height=800");
+                        hWin.document.write(html_text);  
+                    }
+                }
+                hWin.document.close();
+            }
+            else{
+                alert("Please enter a url");
+            }
+        }
+        
+        function generateHTML(jsonObj)   {
+            root=jsonObj.DocumentElement; 
+            html_text="<html><head><title>JSON Parse Result</title></head><body>";
+            html_text+="<table border='2'>"; 
+            html_text+="<tbody>"; 
+            html_text+="<tr>"; 
+            
+            tableHeaders = jsonObj.Mainline.Table.Header.Data;
+            for(i=0;i<tableHeaders.length;i++){
+                html_text += "<th>" + tableHeaders[i] + "</th>";
+            }
+            html_text+="</tr>";          
+            
+            tableData = jsonObj.Mainline.Table.Row;
+            if(tableData){
+                error = false;
+                for(i=0;i<tableData.length;i++){
+                    currentRow = tableData[i];
+                    html_text += "<tr>";
+                    html_text += "<td>" + currentRow["Company"] + "</td>";
+                    html_text += "<td>" + currentRow["Services"] + "</td>";
+                    currentHub = currentRow["Hubs"].Hub;
+                    html_text += "<td><ul>";
+                    count =1;
+                    for(j=0;j<currentHub.length;j++){
+                        html_text += "<li>";
+                        if(count ==1)
+                            html_text += "<b>";
+                         html_text += currentHub[j] + "</li>";
+                        if(count == 1)
+                            html_text += "</b>";
+                        count++;
+                    }
+                    html_text += "</ul></td>";
+                    html_text += "<td>" + currentRow["Revenue"] + "</td>";
+                    html_text += "<td>" + "<a href=\"" + currentRow["HomePage"] + "\">" + currentRow["HomePage"] + "</a></td>";
+                    html_text += "<td><img src=\"" + currentRow["Logo"] + "\" style = \"height:350px; width:550px; align:center\"></td>";
+                    html_text += "</tr>";  
+                }
+                html_text+="</tbody>"; 
+                html_text+="</table>";           
+                html_text+="</body></html>";
+            }
+            else
+                error = true;
+        }
+        
+        function displayErrorAlert(xmlhttp){
+            alert(xmlhttp.HEADERS_RECEIVED);
+            currentHeaders = xmlhttp.getAllResponseHeaders;
+            alert(xmlhttp.DONE);
+            alert("Please enter valid file path");
+        }
+    
+    </script>
+    
+</head>
+    
+<body>
+    <h1>Enter URL for Trucking list JSON file </h1>
+    <form name="myform" method="POST" id="location">
+    <input type="text" name="URL" maxlength="255" size="100" value="" /> 
+    <br/><br/>
+    <input type="button" name="submit" value="Submit Query" onClick="viewJSON(this.form)" />
+    </form>
+</body>
+
+</html>
